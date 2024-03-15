@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="main.css">
+</head>
+
+<body>
+    <div>
+        <input value="6A-101">
+        <button onclick="register(this.previousElementSibling.value)">Register</button>
+        <br><br>
+
+        <input>
+        <button onclick="onReceiveSDPOffer(JSON.parse(this.previousElementSibling.value))">Set SDP answer</button>
+        <br>
+        <input>
+        <button onclick="onReceiveICECandidate(JSON.parse(this.previousElementSibling.value))">Add remote ICE candidate</button>
+        <br>
+
+        <br>
+        <video id="videoPreview" controls></video>
+    </div>
+
+    <div id="console"></div>
+
+    <script src="main.js"></script>
+    <script>
+        function register(name) {
+            // init RTCPeerConnection
+            initPeerConnection()
+
+            // start remote video
+            peerConnection.ontrack = (e) => {
+                playVideo(e.streams[0])
+            }
+
+            // open websocket
+            //
+            var socket = new WebSocket(`${getWsAddress()}/signal?name=${name}&type=client`);
+            window.socket = socket
+
+            socket.onopen = () => {
+                printMsg('Websocket connection established', 'success')
+                printMsg('Waiting for host...')
+            }
+
+            socket.onmessage = (e) => {
+                try {
+                    msg = JSON.parse(e.data)
+
+                    if (msg.type == 'offer') {
+                        onReceiveSDPOffer(msg.data)
+                    } else if (msg.type == 'candidate') {
+                        onReceiveICECandidate(msg.data)
+                    }
+
+                } catch (error) {
+                    printMsg(`Error handling message from server:\n${error}`)
+                }
+            }
+
+            socket.onclose = (e) => {
+                printMsg(`Websocket connection closed, reason: ${e.reason}`, 'error')
+            }
+        }
+
+        printMsg('Hello from client!')
+    </script>
+</body>
+
+</html>

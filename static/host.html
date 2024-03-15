@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="main.css">
+</head>
+
+<body>
+    <div>
+        <input value="6A-101">
+        <button onclick="register(this.previousElementSibling.value)">Start sharing</button>
+        <button onclick="startPeer()">Start peer stream</button>
+        <br><br>
+
+        <input id="remoteDesc">
+        <button onclick="onReceiveSDPAnswer(JSON.parse(this.previousElementSibling.value))">Set SDP answer</button>
+        <br>
+        <input id="remoteCandidate">
+        <button onclick="onReceiveICECandidate(JSON.parse(this.previousElementSibling.value))">Add remote ICE candidate</button>
+        <br>
+
+        <br>
+        <video id="videoPreview" muted></video>
+    </div>
+
+    <div id="console"></div>
+
+    <script src="main.js"></script>
+    <script>
+        async function register(name) {
+            // start local video
+            //
+            try {
+                var stream = await navigator.mediaDevices.getDisplayMedia(
+                    {
+                        video: {
+                            displaySurface: "monitor",
+                            height: 720,
+                            frameRate: 60,
+                        },
+                        audio: {
+                            echoCancellation: false,
+                            noiseSuppression: false,
+                            suppressLocalAudioPlayback: false,
+                        },
+                    }
+                );
+                playVideo(stream)
+
+            } catch (error) {
+                printMsg(`Error accessing screen: ${error}`, 'error');
+                return
+            }
+
+            // open websocket
+            //
+            var socket = new WebSocket(`${getWsAddress()}/signal?name=${name}&type=host`);
+            window.socket = socket
+
+            socket.onopen = async () => {
+                printMsg('Websocket connection established', 'success')
+                printMsg('Waiting for client...')
+            }
+
+            socket.onmessage = (e) => {
+                try {
+                    msg = JSON.parse(e.data)
+
+                    if (msg.type == 'start') {
+                        startPeer()
+                    } else if (msg.type == 'answer') {
+                        onReceiveSDPAnswer(msg.data)
+                    } else if (msg.type == 'candidate') {
+                        onReceiveICECandidate(msg.data)
+                    }
+
+                } catch (error) {
+                    printMsg(`Error handling message from server:\n${error}`)
+                }
+            }
+
+            socket.onclose = (e) => {
+                printMsg(`Websocket connection closed, reason: ${e.reason}`, 'error')
+            }
+        }
+
+        // start peer video
+        //
+        function startPeer() {
+            printMsg('Received request to start peer connection', 'success')
+            initPeerConnection()
+            stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
+        }
+
+        printMsg('Hello from host!')
+    </script>
+</body>
+
+</html>

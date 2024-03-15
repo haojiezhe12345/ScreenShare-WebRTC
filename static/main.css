@@ -1,0 +1,70 @@
+body {
+    display: flex;
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
+}
+
+body>div {
+    flex-grow: 1;
+    flex-basis: 0;
+    min-width: 0;
+    padding: 8px;
+    overflow: auto;
+}
+
+#videoPreview {
+    width: 100%;
+    display: block;
+}
+
+#console {
+    border-left: 1px solid black;
+    font-family: consolas;
+}
+
+#console>p {
+    margin: 0 0 4px;
+    padding: 0 2px;
+    background-color: rgba(0, 0, 0, 0.05);
+    white-space: nowrap;
+    font-size: 14px;
+}
+
+#console>p.success {
+    color: #080;
+    background-color: rgba(0, 128, 0, 0.05);
+}
+
+#console>p.error {
+    color: red;
+    background-color: rgba(255, 0, 0, 0.05);
+}
+
+#console>p.warn {
+    color: #f70;
+    background-color: rgba(255, 215, 0, 0.1);
+}
+
+@media (max-aspect-ratio: 1/1) {
+    body {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: initial;
+        height: initial;
+        flex-flow: column;
+    }
+
+    body>div {
+        flex-grow: 3;
+    }
+
+    #console {
+        flex-grow: 2;
+        border: none;
+        border-top: 1px solid black;
+    }
+}
