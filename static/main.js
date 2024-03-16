@@ -52,9 +52,15 @@ document.getElementById('console').onclick = (e) => {
 // RTC event handlers
 //
 function initPeerConnection() {
-    var peerConnection = new RTCPeerConnection({
-        iceServers: [{ urls: stun_address }],
-    });
+    printMsg("Initiating peer connection")
+    try {
+        var peerConnection = new RTCPeerConnection({
+            iceServers: [{ urls: stun_address }],
+        });    
+    } catch (error) {
+        printMsg("Your browser doesn't support WebRTC (RTCPeerConnection)", 'error')
+        return
+    }
     window.peerConnection = peerConnection
 
     peerConnection.onnegotiationneeded = async () => {

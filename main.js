@@ -40,7 +40,7 @@ app.ws('/signal', (ws, req) => {
         peers[name] = {}
         peers[name][type] = ws
     }
-    // reject multiple hosts/clients
+    // reject multiple hosts
     else if (type == 'host' && peers[name][type] != undefined) {
         reject = 'already registered'
         ws.close(1000, reject)
@@ -57,10 +57,11 @@ app.ws('/signal', (ws, req) => {
     }
     console.log(`[${name}] (${type}) CONNECTED`);
 
-    // if both host and client are online, tells the host to start peer connection
+    // if both host and client are online, tells them to start peer connection
     if (peers[name].host != undefined && peers[name].client != undefined) {
-        console.log(`[${name}] telling host to start peer connection`)
+        console.log(`[${name}] telling host and client to start peer connection`)
         peers[name].host.send(JSON.stringify({ type: 'start' }))
+        peers[name].client.send(JSON.stringify({ type: 'start' }))
     }
 
     // handle SDP & ICE messages

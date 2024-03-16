@@ -15,10 +15,10 @@
         <button onclick="startPeer()">Start peer stream</button>
         <br><br>
 
-        <input id="remoteDesc">
+        <input>
         <button onclick="onReceiveSDPAnswer(JSON.parse(this.previousElementSibling.value))">Set SDP answer</button>
         <br>
-        <input id="remoteCandidate">
+        <input>
         <button onclick="onReceiveICECandidate(JSON.parse(this.previousElementSibling.value))">Add remote ICE candidate</button>
         <br>
 
@@ -60,7 +60,7 @@
             var socket = new WebSocket(`${getWsAddress()}/signal?name=${name}&type=host`);
             window.socket = socket
 
-            socket.onopen = async () => {
+            socket.onopen = () => {
                 printMsg('Websocket connection established', 'success')
                 printMsg('Waiting for client...')
             }
@@ -87,11 +87,12 @@
             }
         }
 
-        // start peer video
+        // init RTCPeerConnection
         //
         function startPeer() {
             printMsg('Received request to start peer connection', 'success')
             initPeerConnection()
+            // add video track
             stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
         }
 
