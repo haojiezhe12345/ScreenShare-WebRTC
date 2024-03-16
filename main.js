@@ -1,11 +1,23 @@
 const express = require('express');
 const expressWs = require('express-ws');
+const http = require('http');
 const https = require('https');
 const fs = require('fs');
 
 const app = express();
-expressWs(app);
 app.use(express.static('static'));
+
+const httpServer = http.createServer(app);
+const httpsServer = https.createServer({
+    key: fs.readFileSync('server.key'),
+    cert: fs.readFileSync('server.crt')
+}, app);
+
+expressWs(app, httpServer);
+expressWs(app, httpsServer);
+
+httpServer.listen(3000)
+httpsServer.listen(3001)
 
 // peers list
 //
@@ -92,13 +104,3 @@ app.get('/peers', (req, res) => {
     }
     res.send(JSON.stringify(result));
 })
-
-const httpsOptions = {
-    key: fs.readFileSync('server.key'),
-    cert: fs.readFileSync('server.crt')
-};
-const server = https.createServer(httpsOptions, app);
-const port = 3000
-
-app.listen(port)
-//server.listen(port)
