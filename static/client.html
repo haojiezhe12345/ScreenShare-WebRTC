@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Client</title>
     <link rel="stylesheet" href="main.css">
 </head>
 
@@ -12,8 +12,13 @@
     <div>
         <input value="6A-101">
         <button onclick="register(this.previousElementSibling.value)">Start listening</button>
-        <br><br>
+        <hr>
+        <video id="videoPreview" controls></video>
+        <hr>
 
+        <div>Manual connect (for serverless connections):</div>
+        <button onclick="startPeer()">Start peer connection</button>
+        <br>
         <input>
         <button onclick="onReceiveSDPOffer(JSON.parse(this.previousElementSibling.value))">Set SDP answer</button>
         <br>
@@ -22,7 +27,6 @@
         <br>
 
         <br>
-        <video id="videoPreview" controls></video>
     </div>
 
     <div id="console"></div>
