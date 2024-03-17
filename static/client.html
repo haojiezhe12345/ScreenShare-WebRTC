@@ -12,9 +12,7 @@
     <div>
         <input value="6A-101">
         <button onclick="register(this.previousElementSibling.value)">Start listening</button>
-        <hr>
         <video id="videoPreview" controls></video>
-        <hr>
 
         <div>Manual connect (for serverless connections):</div>
         <button onclick="startPeer()">Start peer connection</button>
@@ -34,37 +32,8 @@
     <script src="main.js"></script>
     <script>
         function register(name) {
-            // open websocket
-            //
-            if (window.socket) window.socket.close(1000, 'new connection requested')
-            var socket = new WebSocket(`${getWsAddress()}/signal?name=${name}&type=client`);
-            window.socket = socket
-
-            socket.onopen = () => {
-                printMsg('Websocket connection established', 'success')
-                printMsg('Waiting for host...')
-            }
-
-            socket.onmessage = (e) => {
-                try {
-                    msg = JSON.parse(e.data)
-
-                    if (msg.type == 'start') {
-                        startPeer()
-                    } else if (msg.type == 'offer') {
-                        onReceiveSDPOffer(msg.data)
-                    } else if (msg.type == 'candidate') {
-                        onReceiveICECandidate(msg.data)
-                    }
-
-                } catch (error) {
-                    printMsg(`Error handling message from server:\n${error}`)
-                }
-            }
-
-            socket.onclose = (e) => {
-                printMsg(`Websocket connection closed, reason: ${e.reason}`, 'error')
-            }
+            // register on server
+            initSignal(name, 'client')
         }
 
         // init RTCPeerConnection

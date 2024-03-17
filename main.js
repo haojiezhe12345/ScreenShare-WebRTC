@@ -80,7 +80,7 @@ app.ws('/signal', (ws, req) => {
             }
             // exchange ICE candidates
             else if (msg.type == 'candidate') {
-                peers[name][type == 'client' ? 'host' : 'client'].send(JSON.stringify(msg))
+                peers[name][type == 'host' ? 'client' : 'host'].send(JSON.stringify(msg))
             }
         } catch (error) {
             console.log(error)

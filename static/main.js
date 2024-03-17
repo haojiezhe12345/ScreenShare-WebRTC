@@ -4,7 +4,7 @@
 const stun_address = 'stun:stun.qq.com'
 
 
-// Misc
+// UI
 //
 function printMsg(msg, type = null) {
     const consoleEl = document.getElementById('console')
@@ -25,6 +25,7 @@ function playVideo(stream) {
 
     videoEl.srcObject = stream;
     videoEl.play()
+    if (window.stream) window.stream.getTracks().forEach(track => track.stop())
     window.stream = stream
 
     printMsg('Stream started', 'success');
@@ -36,15 +37,56 @@ function playVideo(stream) {
     }
 }
 
+document.getElementById('console').onclick = (e) => {
+    if (e.target.nodeName == 'P') {
+        window.getSelection().selectAllChildren(e.target)
+        navigator.clipboard.writeText(e.target.innerText)
+    }
+}
+
+
+// WebSocket
+//
 function getWsAddress() {
     var l = window.location;
     return ((l.protocol == "https:") ? "wss://" : "ws://") + l.host
 }
 
-document.getElementById('console').onclick = (e) => {
-    if (e.target.nodeName == 'P') {
-        window.getSelection().selectAllChildren(e.target)
-        navigator.clipboard.writeText(e.target.innerText)
+function initSignal(name, type) {
+    if (window.socket) window.socket.close(1000, 'new connection requested')
+    var socket = new WebSocket(`${getWsAddress()}/signal?name=${name}&type=${type}`);
+    window.socket = socket
+
+    socket.onopen = () => {
+        printMsg('Websocket connection established', 'success')
+        printMsg(`Waiting for ${type == 'host' ? 'client' : 'host'}...`)
+    }
+
+    socket.onmessage = (e) => {
+        try {
+            msg = JSON.parse(e.data)
+
+            if (msg.type == 'start') {
+                startPeer()
+            } else if (msg.type == 'offer') {
+                onReceiveSDPOffer(msg.data)
+            } else if (msg.type == 'answer') {
+                onReceiveSDPAnswer(msg.data)
+            } else if (msg.type == 'candidate') {
+                onReceiveICECandidate(msg.data)
+            }
+
+        } catch (error) {
+            printMsg(`Error handling message from server:\n${error}`)
+        }
+    }
+
+    socket.onclose = (e) => {
+        printMsg(`Websocket connection closed (${e.code}), reason: ${e.reason}`, 'error')
+        if (!e.wasClean) {
+            printMsg('Attempting to reconnect...', 'error')
+            setTimeout(initSignal(name, type), 1000)
+        }
     }
 }
 
@@ -54,9 +96,10 @@ document.getElementById('console').onclick = (e) => {
 function initPeerConnection() {
     printMsg("Initiating peer connection")
     try {
+        if (window.peerConnection) window.peerConnection.close()
         var peerConnection = new RTCPeerConnection({
             iceServers: [{ urls: stun_address }],
-        });    
+        });
     } catch (error) {
         printMsg("Your browser doesn't support WebRTC (RTCPeerConnection)", 'error')
         return
