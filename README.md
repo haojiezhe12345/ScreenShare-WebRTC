@@ -15,9 +15,7 @@ Then run the main server with:
 ```node main.js```
 
 ## Configuration
-The web server runs on port **3000 (HTTP)** and **3001 (HTTPS)**, which can be changed in ```main.js```
-
-You can replace ```server.crt``` and ```server.key``` in the root folder with your own certificates
+Server config is saved in ```config/server.json```
 
 ## Usage
 Host (source) page: ```/host.html```

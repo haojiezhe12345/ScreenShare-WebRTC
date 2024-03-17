@@ -1,0 +1,6 @@
+{
+  "http_port": "3000",
+  "https_port": "3001",
+  "https_crt": "server.crt",
+  "https_key": "server.key"
+}

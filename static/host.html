@@ -72,6 +72,9 @@
         }
 
         printMsg('Hello from host!')
+        if (window.location.protocol == 'http:') {
+            printMsg('Screen sharing is not available over HTTP, please use HTTPS instead', 'error')
+        }
     </script>
 </body>
 

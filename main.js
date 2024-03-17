@@ -4,20 +4,49 @@ const http = require('http');
 const https = require('https');
 const fs = require('fs');
 
+// load config
+//
+try {
+    var config = JSON.parse(fs.readFileSync('config/server.json'))
+} catch (error) {
+    var config = {}
+}
+const defaultConfig = {
+    http_port: "3000",
+    https_port: "3001",
+    https_crt: "server.crt",
+    https_key: "server.key",
+}
+var configUpdated = false
+for (let key in defaultConfig) {
+    if (config[key] == undefined) {
+        config[key] = defaultConfig[key]
+        configUpdated = true
+    }
+}
+if (configUpdated) {
+    try {
+        fs.mkdirSync('config', { recursive: true })
+        fs.writeFileSync('config/server.json', JSON.stringify(config, null, 2))
+    } catch (error) { }
+}
+
+// init http(s) server
+//
 const app = express();
 app.use(express.static('static'));
 
 const httpServer = http.createServer(app);
 const httpsServer = https.createServer({
-    key: fs.readFileSync('server.key'),
-    cert: fs.readFileSync('server.crt')
+    cert: fs.readFileSync(config.https_crt),
+    key: fs.readFileSync(config.https_key)
 }, app);
 
 expressWs(app, httpServer);
 expressWs(app, httpsServer);
 
-httpServer.listen(3000)
-httpsServer.listen(3001)
+httpServer.listen(config.http_port, () => { console.log(`HTTP server listening on :${config.http_port}`) })
+httpsServer.listen(config.https_port, () => { console.log(`HTTPS server listening on :${config.https_port}`) })
 
 // peers list
 //
@@ -97,10 +126,10 @@ app.ws('/signal', (ws, req) => {
 //
 app.get('/peers', (req, res) => {
     result = {}
-    for (let obj in peers) {
-        result[obj] = []
-        for (let obj1 in peers[obj]) {
-            result[obj].push(obj1)
+    for (let peer in peers) {
+        result[peer] = []
+        for (let type in peers[peer]) {
+            result[peer].push(type)
         }
     }
     res.send(JSON.stringify(result));
