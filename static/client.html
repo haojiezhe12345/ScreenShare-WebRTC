@@ -12,7 +12,9 @@
     <div>
         <input value="6A-101">
         <button onclick="register(this.previousElementSibling.value)">Start listening</button>
-        <video id="videoPreview" controls></video>
+        <div class="videoContainer">
+            <video id="videoPreview" controls></video>
+        </div>
 
         <div>Manual connect (for serverless connections):</div>
         <button onclick="startPeer()">Start peer connection</button>

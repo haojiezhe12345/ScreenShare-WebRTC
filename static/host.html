@@ -12,7 +12,9 @@
     <div>
         <input value="6A-101">
         <button onclick="register(this.previousElementSibling.value)">Start sharing</button>
-        <video id="videoPreview" muted></video>
+        <div class="videoContainer">
+            <video id="videoPreview" muted></video>
+        </div>
 
         <div>Manual connect (for serverless connections):</div>
         <button onclick="startPeer()">Start peer connection</button>
