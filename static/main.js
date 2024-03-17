@@ -1,7 +1,7 @@
 
 // STUN server
 //
-const stun_address = 'stun:stun.qq.com'
+const stun_address = `stun:${window.location.hostname}`
 
 
 // UI
@@ -85,7 +85,9 @@ function initSignal(name, type) {
         printMsg(`Websocket connection closed (${e.code}), reason: ${e.reason}`, 'error')
         if (!e.wasClean) {
             printMsg('Attempting to reconnect...', 'error')
-            setTimeout(initSignal(name, type), 1000)
+            setTimeout(() => {
+                initSignal(name, type)
+            }, 1000)
         }
     }
 }

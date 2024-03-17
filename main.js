@@ -3,6 +3,8 @@ const expressWs = require('express-ws');
 const http = require('http');
 const https = require('https');
 const fs = require('fs');
+const stun = require('stun');
+
 
 // load config
 //
@@ -31,6 +33,7 @@ if (configUpdated) {
     } catch (error) { }
 }
 
+
 // init http(s) server
 //
 const app = express();
@@ -47,6 +50,23 @@ expressWs(app, httpsServer);
 
 httpServer.listen(config.http_port, () => { console.log(`HTTP server listening on :${config.http_port}`) })
 httpsServer.listen(config.https_port, () => { console.log(`HTTPS server listening on :${config.https_port}`) })
+
+
+// init STUN server
+//
+const server = stun.createServer({ type: 'udp4' })
+server.listen(3478, null, () => { console.log(`STUN server listening on 0.0.0.0:3478`) })
+
+server.on('bindingRequest', (req, rinfo) => {
+    //console.log(`Received STUN binding request on ${rinfo.address}:${rinfo.port}`)
+    const response = stun.createMessage();
+    response.setType(stun.constants.STUN_BINDING_RESPONSE);
+    response.setTransactionID(req.transactionId);
+    // respond with IP and port
+    response.addAddress(rinfo.address, rinfo.port)
+    server.send(response, rinfo.port, rinfo.address);
+});
+
 
 // peers list
 //
@@ -84,7 +104,7 @@ app.ws('/signal', (ws, req) => {
         console.log(`[${name}] (${type}) REJECTED: ${reject}`);
         return
     }
-    console.log(`[${name}] (${type}) CONNECTED`);
+    console.log(`[${name}] (${type}) CONNECTED (${req.connection.remoteAddress})`);
 
     // if both host and client are online, tells them to start peer connection
     if (peers[name].host != undefined && peers[name].client != undefined) {
