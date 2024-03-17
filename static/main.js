@@ -160,6 +160,12 @@ async function onReceiveSDPOffer(sdp) {
 async function onReceiveSDPAnswer(sdp) {
     printMsg('Received SDP answer:', 'success')
     printMsg(sdp, 'success')
+
+    // modify SDP to achieve higher bitrate (Chrome only)
+    printMsg('Modified SDP:')
+    sdp.sdp = sdp.sdp.replace(/(m=video.*\r\n)/g, `$1b=AS:${parseInt(document.getElementById('bitrate').value)}\r\n`);
+    printMsg(sdp)
+
     await peerConnection.setRemoteDescription(sdp);
 }
 

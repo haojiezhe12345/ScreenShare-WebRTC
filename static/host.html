@@ -27,6 +27,13 @@
         <br>
 
         <br>
+        <div>Advanced settings:</div>
+        Resolution (pixels height): <input id="resolution" type="number" value="800">
+        <br>
+        Framerate (fps): <input id="fps" type="number" value="60">
+        <br>
+        Bitrate (Kbps): <input id="bitrate" type="number" value="20000">
+        <br>
     </div>
 
     <div id="console"></div>
@@ -41,8 +48,8 @@
                     {
                         video: {
                             displaySurface: "monitor",
-                            height: 720,
-                            frameRate: 60,
+                            height: parseInt(document.getElementById('resolution').value),
+                            frameRate: parseInt(document.getElementById('fps').value),
                         },
                         audio: {
                             echoCancellation: false,

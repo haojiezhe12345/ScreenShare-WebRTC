@@ -30,6 +30,3 @@ Peers list: ```/peers```
 Once both sides are registered on the server, the stream will start.**
 
 The stream is transmitted over P2P connections, so it's best used under LANs, or peers with open NAT.
-
-Video quality is 720p 60fps, but will drop to 30fps or lower if video motion is intensive.\
-Higher resolution is not recommended as it may cause low framerate. You can change it in ```host.html``` if you wish.
