@@ -8,6 +8,7 @@ const stun_address = `stun:${window.location.hostname}`
 //
 const consoleEl = document.getElementById('console')
 const videoEl = document.getElementById('videoPreview')
+const codecPreferences = document.getElementById('codec')
 
 function printMsg(msg, type = null) {
     var msgEl = document.createElement('p')
@@ -150,6 +151,9 @@ async function onReceiveSDPOffer(sdp) {
     printMsg(sdp, 'success')
     await peerConnection.setRemoteDescription(sdp);
 
+    // change preferred codec before creating SDP answer
+    setRecvCodec()
+
     const answer = await peerConnection.createAnswer();
     printMsg('Created SDP answer:', 'warn')
     printMsg(answer, 'warn')
@@ -172,6 +176,7 @@ async function onReceiveSDPAnswer(sdp) {
     printMsg(sdp)
 
     await peerConnection.setRemoteDescription(sdp);
+    // actual codec after negotiation
     printPeerCodec()
 }
 
@@ -188,8 +193,39 @@ function printPeerCodec() {
     peerConnection.getStats().then((stats) => {
         stats.forEach((stat) => {
             if (stat.type == 'codec') {
-                printMsg(`Using codec: ${stat.mimeType} ${stat.sdpFmtpLine}`)
+                printMsg(`Using codec: ${stat.mimeType} ${stat.sdpFmtpLine || ''}`)
             }
         })
     })
+}
+
+function getRecvCodec() {
+    const { codecs } = RTCRtpReceiver.getCapabilities('video');
+    codecs.forEach(codec => {
+        if (['video/red', 'video/ulpfec', 'video/rtx'].includes(codec.mimeType)) {
+            return;
+        }
+        const codecStr = (codec.mimeType + ' ' + (codec.sdpFmtpLine || '')).trim()
+        const option = document.createElement('option');
+        option.value = codecStr;
+        option.innerText = option.value;
+        codecPreferences.appendChild(option);
+        
+    });
+    codecPreferences.disabled = false;
+}
+
+function setRecvCodec() {
+    const preferredCodec = codecPreferences.value
+    if (preferredCodec !== '') {
+        const [mimeType, sdpFmtpLine] = preferredCodec.split(' ');
+        const { codecs } = RTCRtpReceiver.getCapabilities('video');
+        const selectedCodecIndex = codecs.findIndex(c => c.mimeType === mimeType && c.sdpFmtpLine === sdpFmtpLine);
+        const selectedCodec = codecs[selectedCodecIndex];
+        codecs.splice(selectedCodecIndex, 1);
+        codecs.unshift(selectedCodec);
+        peerConnection.getTransceivers().forEach((transceiver) => {
+            if (transceiver.receiver.track.kind == 'video') transceiver.setCodecPreferences(codecs);
+        })
+    }
 }

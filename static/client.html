@@ -25,6 +25,11 @@
         <input>
         <button onclick="onReceiveICECandidate(JSON.parse(this.previousElementSibling.value))">Add remote ICE candidate</button>
         <br>
+        Preferred codec:
+        <select id="codec">
+            <option selected value="">Default</option>
+        </select>
+        <br>
     </div>
 
     <div id="console"></div>
@@ -52,6 +57,8 @@
             printMsg(`Video loaded: ${videoEl.videoWidth}x${videoEl.videoHeight}`, 'success')
             printPeerCodec()
         }
+
+        getRecvCodec()
 
         printMsg('Hello from client!')
     </script>
