@@ -47,6 +47,12 @@
             }
         }
 
+        // listen for video data and print info
+        videoEl.onloadeddata = () => {
+            printMsg(`Video loaded: ${videoEl.videoWidth}x${videoEl.videoHeight}`, 'success')
+            printPeerCodec()
+        }
+
         printMsg('Hello from client!')
     </script>
 </body>

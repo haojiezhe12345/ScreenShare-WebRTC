@@ -138,7 +138,7 @@ app.ws('/signal', (ws, req) => {
 
     ws.on('close', () => {
         console.log(`[${name}] (${type}) DISCONNECTED`);
-        delete peers[name][type]
+        if (peers[name][type] == ws) delete peers[name][type]
     });
 });
 

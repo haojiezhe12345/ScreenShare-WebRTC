@@ -6,8 +6,10 @@ const stun_address = `stun:${window.location.hostname}`
 
 // UI
 //
+const consoleEl = document.getElementById('console')
+const videoEl = document.getElementById('videoPreview')
+
 function printMsg(msg, type = null) {
-    const consoleEl = document.getElementById('console')
     var msgEl = document.createElement('p')
     if (typeof (msg) != 'string') {
         msgEl.innerText = JSON.stringify(msg, null, 2)
@@ -20,7 +22,6 @@ function printMsg(msg, type = null) {
 }
 
 function playVideo(stream) {
-    const videoEl = document.getElementById('videoPreview')
     if (videoEl.srcObject === stream) return
 
     videoEl.srcObject = stream;
@@ -37,7 +38,7 @@ function playVideo(stream) {
     }
 }
 
-document.getElementById('console').onclick = (e) => {
+consoleEl.onclick = (e) => {
     if (e.target.nodeName == 'P') {
         window.getSelection().selectAllChildren(e.target)
         navigator.clipboard.writeText(e.target.innerText)
@@ -138,6 +139,10 @@ function initPeerConnection() {
         var state = e.currentTarget.iceConnectionState
         printMsg(`Connection state changed: ${state}`, state == 'connected' ? 'success' : 'warn')
     }
+
+    peerConnection.onicegatheringstatechange = (e) => {
+        printMsg(`ICE gathering state: ${e.target.iceGatheringState}`)
+    }
 }
 
 async function onReceiveSDPOffer(sdp) {
@@ -167,6 +172,7 @@ async function onReceiveSDPAnswer(sdp) {
     printMsg(sdp)
 
     await peerConnection.setRemoteDescription(sdp);
+    printPeerCodec()
 }
 
 function onReceiveICECandidate(candidate) {
@@ -175,3 +181,15 @@ function onReceiveICECandidate(candidate) {
     peerConnection.addIceCandidate(candidate)
 }
 
+
+// Misc
+//
+function printPeerCodec() {
+    peerConnection.getStats().then((stats) => {
+        stats.forEach((stat) => {
+            if (stat.type == 'codec') {
+                printMsg(`Using codec: ${stat.mimeType} ${stat.sdpFmtpLine}`)
+            }
+        })
+    })
+}
