@@ -210,22 +210,26 @@ function getRecvCodec() {
         option.value = codecStr;
         option.innerText = option.value;
         codecPreferences.appendChild(option);
-        
+
     });
     codecPreferences.disabled = false;
 }
 
 function setRecvCodec() {
-    const preferredCodec = codecPreferences.value
-    if (preferredCodec !== '') {
-        const [mimeType, sdpFmtpLine] = preferredCodec.split(' ');
-        const { codecs } = RTCRtpReceiver.getCapabilities('video');
-        const selectedCodecIndex = codecs.findIndex(c => c.mimeType === mimeType && c.sdpFmtpLine === sdpFmtpLine);
-        const selectedCodec = codecs[selectedCodecIndex];
-        codecs.splice(selectedCodecIndex, 1);
-        codecs.unshift(selectedCodec);
-        peerConnection.getTransceivers().forEach((transceiver) => {
-            if (transceiver.receiver.track.kind == 'video') transceiver.setCodecPreferences(codecs);
-        })
+    try {
+        const preferredCodec = codecPreferences.value
+        if (preferredCodec !== '') {
+            const [mimeType, sdpFmtpLine] = preferredCodec.split(' ');
+            const { codecs } = RTCRtpReceiver.getCapabilities('video');
+            const selectedCodecIndex = codecs.findIndex(c => c.mimeType === mimeType && c.sdpFmtpLine === sdpFmtpLine);
+            const selectedCodec = codecs[selectedCodecIndex];
+            codecs.splice(selectedCodecIndex, 1);
+            codecs.unshift(selectedCodec);
+            peerConnection.getTransceivers().forEach((transceiver) => {
+                if (transceiver.receiver.track.kind == 'video') transceiver.setCodecPreferences(codecs);
+            })
+        }
+    } catch (error) {
+        printMsg(`Failed to set preferred codec: ${error}`, 'warn')
     }
 }
