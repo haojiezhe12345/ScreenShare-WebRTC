@@ -55,8 +55,8 @@ function getWsAddress() {
 }
 
 function initSignal(name, type) {
-    if (window.socket) window.socket.close(1000, 'new connection requested')
     var socket = new WebSocket(`${getWsAddress()}/signal?name=${name}&type=${type}`);
+    if (window.socket) window.socket.close(1000, 'new connection requested')
     window.socket = socket
 
     socket.onopen = () => {
@@ -76,6 +76,8 @@ function initSignal(name, type) {
                 onReceiveSDPAnswer(msg.data)
             } else if (msg.type == 'candidate') {
                 onReceiveICECandidate(msg.data)
+            } else if (msg.type == 'heartbeat') {
+                //logToConsole('Heartbeat received')
             }
 
         } catch (error) {
@@ -94,13 +96,21 @@ function initSignal(name, type) {
     }
 }
 
+// WebSocket heartbeat
+setInterval(() => {
+    try {
+        if (window.socket.readyState == WebSocket.OPEN) {
+            window.socket.send(JSON.stringify({ type: 'heartbeat' }))
+        }
+    } catch (error) { }
+}, 5000);
+
 
 // RTC event handlers
 //
 function initPeerConnection() {
     printMsg("Initiating peer connection")
     try {
-        if (window.peerConnection) window.peerConnection.close()
         var peerConnection = new RTCPeerConnection({
             iceServers: [{ urls: stun_address }],
         });
@@ -108,6 +118,7 @@ function initPeerConnection() {
         printMsg("Your browser doesn't support WebRTC (RTCPeerConnection)", 'error')
         return
     }
+    if (window.peerConnection) window.peerConnection.close()
     window.peerConnection = peerConnection
 
     peerConnection.onnegotiationneeded = async () => {

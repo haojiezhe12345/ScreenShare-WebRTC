@@ -58,7 +58,7 @@ const server = stun.createServer({ type: 'udp4' })
 server.listen(3478, null, () => { console.log(`STUN server listening on 0.0.0.0:3478`) })
 
 server.on('bindingRequest', (req, rinfo) => {
-    //console.log(`Received STUN binding request on ${rinfo.address}:${rinfo.port}`)
+    console.log(`Received STUN binding request from ${rinfo.address}:${rinfo.port}`)
     const response = stun.createMessage();
     response.setType(stun.constants.STUN_BINDING_RESPONSE);
     response.setTransactionID(req.transactionId);
@@ -89,8 +89,8 @@ app.ws('/signal', (ws, req) => {
         peers[name] = {}
         peers[name][type] = ws
     }
-    // reject multiple hosts
-    else if (type == 'host' && peers[name][type] != undefined) {
+    // reject multiple endpoints
+    else if (peers[name][type] != undefined) {
         reject = 'already registered'
         ws.close(1000, reject)
     }
@@ -106,9 +106,12 @@ app.ws('/signal', (ws, req) => {
     }
     console.log(`[${name}] (${type}) CONNECTED (${req.connection.remoteAddress})`);
 
+    // clear lastOnline on peer connection
+    delete peers[name].lastOnline
+
     // if both host and client are online, tells them to start peer connection
     if (peers[name].host != undefined && peers[name].client != undefined) {
-        console.log(`[${name}] telling host and client to start peer connection`)
+        console.log(`[${name}] Telling host and client to start peer connection`)
         peers[name].host.send(JSON.stringify({ type: 'start' }))
         peers[name].client.send(JSON.stringify({ type: 'start' }))
     }
@@ -117,7 +120,7 @@ app.ws('/signal', (ws, req) => {
     ws.on('message', (e) => {
         try {
             msg = JSON.parse(e)
-            console.log(`[${name}] (${type}): received ${msg.type}`)
+            console.log(`[${name}] (${type}): Received ${msg.type}`)
 
             // host SDP offer -> client
             if (msg.type == 'offer') {
@@ -139,17 +142,35 @@ app.ws('/signal', (ws, req) => {
     ws.on('close', () => {
         console.log(`[${name}] (${type}) DISCONNECTED`);
         if (peers[name][type] == ws) delete peers[name][type]
+        // set lastOnline timestamp if both peers have been disconnected
+        if (Object.keys(peers[name]).length == 0) {
+            let ts = Date.now()
+            console.log(`[${name}] Last online: ${ts}`)
+            peers[name].lastOnline = ts
+        }
     });
 });
+
+// WebSocket heartbeat
+//
+setInterval(() => {
+    for (let name in peers) {
+        for (let type in peers[name]) {
+            if (peers[name][type].send instanceof Function) {
+                peers[name][type].send(JSON.stringify({ type: 'heartbeat' }))
+            }
+        }
+    }
+}, 5000);
 
 // get peers list
 //
 app.get('/peers', (req, res) => {
     result = {}
-    for (let peer in peers) {
-        result[peer] = []
-        for (let type in peers[peer]) {
-            result[peer].push(type)
+    for (let name in peers) {
+        result[name] = {}
+        for (let type in peers[name]) {
+            result[name][type] = typeof (peers[name][type]) == 'object' ? true : peers[name][type]
         }
     }
     res.send(JSON.stringify(result));
