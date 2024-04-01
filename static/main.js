@@ -56,7 +56,14 @@ function getWsAddress() {
 
 function initSignal(name, type) {
     var socket = new WebSocket(`${getWsAddress()}/signal?name=${name}&type=${type}`);
-    if (window.socket) window.socket.close(1000, 'new connection requested')
+    if (window.socket) {
+        if (window.socket.readyState == WebSocket.CONNECTING) {
+            window.socket.onclose = () => {
+                printMsg(`Closing a CONNECTING websocket`, 'warn')
+            }
+        }
+        window.socket.close(1000, 'new connection requested')
+    }
     window.socket = socket
 
     socket.onopen = () => {

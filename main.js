@@ -77,6 +77,7 @@ var peers = {}
 app.ws('/signal', (ws, req) => {
     const name = req.query.name;
     const type = req.query.type;
+    const ip = ws._socket.remoteAddress
 
     var reject = false
     // reject empty names
@@ -90,7 +91,7 @@ app.ws('/signal', (ws, req) => {
         peers[name][type] = ws
     }
     // reject multiple endpoints
-    else if (peers[name][type] != undefined) {
+    else if (peers[name][type] != undefined && peers[name][type]._socket.remoteAddress != ip) {
         reject = 'already registered'
         ws.close(1000, reject)
     }
@@ -104,7 +105,7 @@ app.ws('/signal', (ws, req) => {
         console.log(`[${name}] (${type}) REJECTED: ${reject}`);
         return
     }
-    console.log(`[${name}] (${type}) CONNECTED (${req.connection.remoteAddress})`);
+    console.log(`[${name}] (${type}) CONNECTED (${ip})`);
 
     // clear lastOnline on peer connection
     delete peers[name].lastOnline
@@ -135,7 +136,7 @@ app.ws('/signal', (ws, req) => {
                 peers[name][type == 'host' ? 'client' : 'host'].send(JSON.stringify(msg))
             }
         } catch (error) {
-            console.log(error)
+            console.warn(error)
         }
     });
 
@@ -154,12 +155,16 @@ app.ws('/signal', (ws, req) => {
 // WebSocket heartbeat
 //
 setInterval(() => {
-    for (let name in peers) {
-        for (let type in peers[name]) {
-            if (peers[name][type].send instanceof Function) {
-                peers[name][type].send(JSON.stringify({ type: 'heartbeat' }))
+    try {
+        for (let name in peers) {
+            for (let type in peers[name]) {
+                if (peers[name][type].send instanceof Function) {
+                    peers[name][type].send(JSON.stringify({ type: 'heartbeat' }))
+                }
             }
         }
+    } catch (error) {
+        console.warn(error)
     }
 }, 5000);
 
