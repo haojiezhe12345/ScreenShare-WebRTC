@@ -180,3 +180,16 @@ app.get('/peers', (req, res) => {
     }
     res.send(JSON.stringify(result));
 })
+
+// generate peer code
+//
+app.get('/peerCode', (req, res) => {
+    function randInt(length) {
+        return Math.floor(Math.random() * (10 ** length - 10 ** (length - 1)) + 10 ** (length - 1))
+    }
+    var randomCode = 0
+    while (randomCode == 0 || peers[randomCode.toString()] != undefined) {
+        randomCode = randInt(4)
+    }
+    res.send(randomCode.toString())
+})
